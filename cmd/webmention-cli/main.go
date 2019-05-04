@@ -9,13 +9,10 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/wsxiaoys/terminal/color"
 	"willnorris.com/go/webmention"
@@ -66,63 +63,16 @@ func main() {
 		links = append(links, link{url: l})
 	}
 
-	selectLinks(links)
 	sendWebmentions(links)
 }
 
 type link struct {
-	url  string
-	ping bool
-}
-
-func selectLinks(links []link) {
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Println("Select links to send webmentions to:")
-		for i, link := range links {
-			x := " "
-			if link.ping {
-				x = "x"
-			}
-			fmt.Printf("  [%s]: %2d. %v\n", x, i, link.url)
-		}
-
-		fmt.Print("\nEnter space separated IDs of links to toggle, [a]ll or [n]one: ")
-		input, _ := reader.ReadString('\n')
-		input = strings.ToLower(strings.TrimSpace(input))
-		fmt.Println()
-
-		switch input {
-		case "":
-			return
-		case "a", "all":
-			for i := range links {
-				links[i].ping = true
-			}
-		case "n", "none":
-			for i := range links {
-				links[i].ping = false
-			}
-		default:
-			for _, a := range strings.Split(input, " ") {
-				i, err := strconv.Atoi(a)
-				if err != nil || i > len(links) {
-					continue
-				}
-				links[i].ping = !links[i].ping
-			}
-		}
-	}
+	url string
 }
 
 func sendWebmentions(links []link) {
 	fmt.Println("Sending webmentions...")
 	for _, l := range links {
-		if !l.ping {
-			continue
-		}
-
 		fmt.Printf("  %v ... ", l.url)
 		endpoint, err := client.DiscoverEndpoint(l.url)
 		if err != nil {
